@@ -2,23 +2,30 @@ pragma solidity ^0.8.6;
 
 import '@openzeppelin/contracts/token/ERC721/ERC721.sol';
 import '@openzeppelin/contracts/token/ERC20/IERC20.sol';
+import '@openzeppelin/contracts/access/Ownable.sol';
 
 contract NFT is ERC721 {
+  address[] public artists;
   address public artist;
   address public txFeeToken;
-  uint public txFeeAmount;
+  uint public royalty;
   mapping(address => bool) public excludedList;
 
   constructor(
     address _artist, 
     address _txFeeToken,
-    uint _txFeeAmount
+    uint _royalty
   ) ERC721('My NFT', 'ABC') {
     artist = _artist;
     txFeeToken = _txFeeToken;
-    txFeeAmount = _txFeeAmount;
+    royalty = _royalty;
     excludedList[_artist] = true; 
     _mint(artist, 0);
+  }
+
+  function addArtist(address newArtist) external {
+    require(msg.sender == owner);
+    artists.push(newArtist);
   }
 
   function setExcluded(address excluded, bool status) external {
@@ -70,6 +77,6 @@ contract NFT is ERC721 {
 
   function _payTxFee(address from) internal {
     IERC20 token = IERC20(txFeeToken);
-    token.transferFrom(from, artist, txFeeAmount);
+    token.transferFrom(from, artist, royalty);
   }
 }
